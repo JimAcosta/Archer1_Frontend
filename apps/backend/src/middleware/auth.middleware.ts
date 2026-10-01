@@ -27,7 +27,7 @@ export const authenticateJWT = (
     ) as JwtPayload;
 
     req.user = decoded;
-
+    console.log("aca pase");
     next();
   } catch (error) {
     res.status(401).json({ message: "Token inválido o expirado" });

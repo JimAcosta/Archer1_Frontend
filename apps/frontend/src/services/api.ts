@@ -35,23 +35,43 @@ export const api = {
     return result;
   },
 
-  async getActivities(producerId: string): Promise<any[]> {
-    if (!producerId) return [];
+  async getActivitiesByExploitation(
+  exploitationId: string
+): Promise<any[]> {
 
-    try {
-      const response = await fetch(
-        `${API_ENDPOINTS.BASE}/activity/${producerId}`,
-        {
-          credentials: "include",
-        },
+  if (!exploitationId) return [];
+
+  try {
+
+    const response = await fetch(
+      `${API_ENDPOINTS.BASE}/activity/exploitation/${exploitationId}`,
+      {
+        credentials: "include",
+      }
+    );
+
+    if (!response.ok) {
+      console.error(
+        "Error:",
+        response.status
       );
 
-      if (!response.ok) return [];
-      return await response.json();
-    } catch (error) {
       return [];
     }
-  },
+
+    return await response.json();
+
+  } catch (error) {
+
+    console.error(
+      "Error obteniendo actividades:",
+      error
+    );
+
+    return [];
+  }
+}
+,
 
   async createActivity(data: any): Promise<any> {
     const response = await fetch(`${API_ENDPOINTS.BASE}/activity`, {
@@ -93,6 +113,32 @@ export const api = {
     if (!response.ok) return [];
     return await response.json();
   },
+
+
+  async getExplotationsByTechnician(): Promise<any[]> {
+  const response = await fetch(
+    `${API_ENDPOINTS.BASE}/exploitation/technician`,
+    {
+      credentials: "include",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Error al obtener las explotaciones del técnico: ${response.status}`
+    );
+  }
+
+  
+
+  const data = await response.json();
+
+  console.log("RESPUESTA EXPLOTACIONES:", data);
+
+  return data;
+},
+
+
 
   async createExplotation(data: any): Promise<any> {
     const response = await fetch(

@@ -1,164 +1,586 @@
-import React, { createContext, useState, useContext, ReactNode, useCallback } from "react";
+import React, {
+  createContext,
+  useState,
+  useContext,
+  ReactNode,
+  useCallback,
+} from "react";
+
 import { api } from "../services/api";
 
+// =========================================================
+// INTERFAZ ACTIVITY
+// =========================================================
+
 export interface Activity {
+
   id?: string;
+
   plot: string;
+
   crop: string;
+
   activitytype: string;
+
   responsible: string;
+
   description: string;
+
   date_day: number;
+
   date_month: number;
+
   date_year: number;
+
   explotation: string;
 }
 
+// =========================================================
+// CONTEXT
+// =========================================================
+
 interface ExplotationContextProps {
+
   explotations: any[];
+
   activities: Activity[];
-  agregarActivity: (act: Activity) => Promise<void>;
-  agregarExplotation: (ex: any) => Promise<any>; 
-  actualizarActivity: (id: string, act: Activity) => Promise<void>;
-  cargarExplotacionesByProducer: (producerId: string) => Promise<any[]>;
-  cargarActividades: () => Promise<void>;
+
+  agregarActivity:
+    (act: Activity) => Promise<void>;
+
+  agregarExplotation:
+    (ex: any) => Promise<any>;
+
+  actualizarActivity:
+    (
+      id: string,
+      act: Activity
+    ) => Promise<void>;
+
+  cargarExplotacionesByProducer:
+    (
+      producerId: string
+    ) => Promise<any[]>;
+
+  cargarExplotacionesByTechnician:
+    () => Promise<any[]>;
+
+  cargarActividades:
+    () => Promise<void>;
+
+  cargarActividadesByExplotation:
+    (
+      explotationId: string
+    ) => Promise<Activity[]>;
 }
 
-const ExplotationContext = createContext<ExplotationContextProps | undefined>(undefined);
+// =========================================================
+// CONTEXT
+// =========================================================
+
+const ExplotationContext =
+  createContext<
+    ExplotationContextProps | undefined
+  >(undefined);
+
+// =========================================================
+// HOOK
+// =========================================================
 
 export const useExplotation = () => {
-  const context = useContext(ExplotationContext);
-  if (!context) throw new Error("useExplotation debe usarse dentro de ExplotationProvider");
+
+  const context =
+    useContext(
+      ExplotationContext
+    );
+
+  if (!context) {
+
+    throw new Error(
+      "useExplotation debe usarse dentro de ExplotationProvider"
+    );
+
+  }
+
   return context;
 };
 
-export const ExplotationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [explotations, setExplotations] = useState<any[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
+// =========================================================
+// PROVIDER
+// =========================================================
 
-  const agregarExplotation = useCallback(async (ex: any) => {
-    try {
-      const response = await api.createExplotation(ex); 
-      
-      setExplotations((prev) => [...prev, response || ex]);
-      
-      return response || ex;
-    } catch (error) {
-      console.error("Error en agregarExplotation:", error);
-      throw error;
-    }
-  }, []);
+export const ExplotationProvider:
+  React.FC<{
+    children: ReactNode;
+  }> = ({ children }) => {
 
-  const cargarActividades = useCallback(async () => {
+  const [
+    explotations,
+    setExplotations
+  ] = useState<any[]>([]);
+
+  const [
+    activities,
+    setActivities
+  ] = useState<Activity[]>([]);
+
+  // =======================================================
+  // CREAR EXPLOTACIÓN
+  // =======================================================
+
+  const agregarExplotation =
+    useCallback(
+      async (ex: any) => {
+
+        try {
+
+          const response =
+            await api.createExplotation(
+              ex
+            );
+
+          const nueva =
+            response || ex;
+
+          setExplotations(
+            (prev) => [
+              ...prev,
+              nueva,
+            ]
+          );
+
+          return nueva;
+
+        } catch (error) {
+
+          console.error(
+            "Error en agregarExplotation:",
+            error
+          );
+
+          throw error;
+        }
+
+      },
+      []
+    );
+
+  // =======================================================
+  // EXPLOTACIONES DEL PRODUCTOR
+  // =======================================================
+
+  const cargarExplotacionesByProducer =
+    useCallback(
+      async (
+        producerId: string
+      ) => {
+
+        if (!producerId) {
+          return [];
+        }
+
+        try {
+
+          const data =
+            await api.getExplotationsByProducer(
+              producerId
+            );
+
+          setExplotations(
+            data || []
+          );
+
+          return data || [];
+
+        } catch (error) {
+
+          console.error(
+            "Error al cargar explotaciones del productor:",
+            error
+          );
+
+          setExplotations([]);
+
+          return [];
+        }
+
+      },
+      []
+    );
+
+  // =======================================================
+  // EXPLOTACIONES DEL TÉCNICO
+  // =======================================================
+
+  const cargarExplotacionesByTechnician =
+    useCallback(
+      async () => {
+
+        try {
+
+          console.log(
+            "Consultando explotaciones del técnico..."
+          );
+
+          const data =
+            await api.getExplotationsByTechnician();
+
+          console.log(
+            "Explotaciones recibidas:",
+            data
+          );
+
+          setExplotations(
+            data || []
+          );
+
+          return data || [];
+
+        } catch (error) {
+
+          console.error(
+            "Error al cargar explotaciones del técnico:",
+            error
+          );
+
+          setExplotations([]);
+
+          return [];
+        }
+
+      },
+      []
+    );
+
+  // =======================================================
+  // CARGAR TODAS LAS ACTIVIDADES DEL USUARIO
+  // =======================================================
+
+  const cargarActividades = useCallback(
+  async () => {
     try {
-      const userStr = localStorage.getItem('example_user');
-      if (!userStr) return;
-      
+      const userStr = localStorage.getItem("example_user");
+
+      if (!userStr) {
+        console.log("❌ No existe example_user");
+        return;
+      }
+
       const userData = JSON.parse(userStr);
+
       const userId = userData?.id;
-      if (!userId) return;
+
+      if (!userId) {
+        console.log("❌ No existe userId");
+        return;
+      }
+
+      console.log("🔵 Consultando actividades para usuario:", userId);
 
       const data = await api.getActivities(userId);
-      
-      const localesStr = localStorage.getItem(`local_activities_${userId}`);
-      const actividadesLocales: Activity[] = localesStr ? JSON.parse(localesStr) : [];
+
+      console.log("🟢 RESPUESTA CRUDA DE getActivities:");
+      console.log(data);
+
+      console.log("¿Es array?", Array.isArray(data));
+      console.log("Cantidad:", Array.isArray(data) ? data.length : "NO ES ARRAY");
+
+      if (Array.isArray(data)) {
+        data.forEach((act: any, index: number) => {
+          console.log(`Actividad ${index}:`, act);
+        });
+      }
+
+      const localesStr =
+        localStorage.getItem(
+          `local_activities_${userId}`
+        );
+
+      const actividadesLocales: Activity[] =
+        localesStr
+          ? JSON.parse(localesStr)
+          : [];
+
+      console.log(
+        "Actividades locales:",
+        actividadesLocales
+      );
 
       let combinadas: Activity[] = [];
-      
-      if (Array.isArray(data) && data.length > 0) {
-        combinadas = data.map((act: any) => ({
-          ...act,
-          explotation: act.explotation || act.exploitation || ""
-        }));
+
+      if (
+        Array.isArray(data) &&
+        data.length > 0
+      ) {
+        combinadas = data.map(
+          (act: any) => ({
+            ...act,
+
+            explotation:
+              act.explotation ||
+              act.exploitation ||
+              act.exploitationId ||
+              "",
+          })
+        );
       } else {
+
         combinadas = actividadesLocales;
+
       }
+
+      console.log(
+        "🟣 ACTIVIDADES QUE SE GUARDARÁN EN CONTEXT:",
+        combinadas
+      );
 
       setActivities(combinadas);
-    } catch (error) {
-      console.error("Error al cargar actividades:", error);
-    }
-  }, []);
 
-  const cargarExplotacionesByProducer = useCallback(async (producerId: string) => {
-    if (!producerId) return [];
-    try {
-      const data = await api.getExplotationsByProducer(producerId);
-      setExplotations(data || []);
-      return data;
     } catch (error) {
-      return [];
-    }
-  }, []);
 
-  const agregarActivity = useCallback(async (act: Activity) => {
-    try {
-      const response = await api.createActivity(act);
-      const nuevaAct = response || act;
-      
-      const userStr = localStorage.getItem('example_user');
-      const userId = JSON.parse(userStr || '{}').id;
-      
-      if (userId) {
-        const localesStr = localStorage.getItem(`local_activities_${userId}`);
-        const actuales: Activity[] = localesStr ? JSON.parse(localesStr) : [];
-        const nuevas = [nuevaAct, ...actuales];
-        localStorage.setItem(`local_activities_${userId}`, JSON.stringify(nuevas));
+      console.error(
+        "❌ Error al cargar actividades:",
+        error
+      );
+
+    }
+  },
+  []
+);
+
+
+  // =======================================================
+  // ACTIVIDADES DE UNA EXPLOTACIÓN
+  // =======================================================
+
+  const cargarActividadesByExplotation =
+  useCallback(
+    async (
+      explotationId: string
+    ) => {
+
+      if (!explotationId) {
+
+        console.warn(
+          "No se recibió explotationId"
+        );
+
+        setActivities([]);
+
+        return [];
       }
 
-      setActivities(prev => [nuevaAct, ...prev]);
+      try {
 
-    } catch (error) {
-      console.error("Error al guardar actividad:", error);
-      setActivities(prev => [act, ...prev]);
-    }
-  }, []);
+        console.log(
+          "================================"
+        );
 
- const actualizarActivity = useCallback(async (id: string, act: Activity) => {
-  try {
-    // 1. Intentamos avisar al servidor (por si acaso lo arreglan en el futuro)
-    // Pero como sabemos que falla, rodeamos esto con un try/catch interno
-    try {
-      await api.updateActivity(id, act);
-    } catch (e) {
-      console.warn("El servidor no soporta edición, guardando solo en local.");
-    }
+        console.log(
+          "BUSCANDO ACTIVIDADES DE EXPLOTACIÓN"
+        );
 
-    // 2. ACTUALIZAMOS EL LOCAL STORAGE (Esto es lo importante)
-    const userStr = localStorage.getItem('example_user');
-    const userId = JSON.parse(userStr || '{}').id;
-    
-    if (userId) {
-      const localesStr = localStorage.getItem(`local_activities_${userId}`);
-      let actuales: Activity[] = localesStr ? JSON.parse(localesStr) : [];
-      
-      // Reemplazamos la actividad vieja por la editada en la lista local
-      const actualizadas = actuales.map(a => (a.id === id ? { ...act, id } : a));
-      localStorage.setItem(`local_activities_${userId}`, JSON.stringify(actualizadas));
-    }
+        console.log(
+          "EXPLOTACIÓN:",
+          explotationId
+        );
 
-    // 3. Actualizamos la interfaz al momento
-    setActivities(prev => prev.map(a => (a.id === id ? { ...act, id } : a)));
-    
-    // No lanzamos el error (throw) para que el modal se cierre con éxito
-  } catch (error) {
-    console.error("Error crítico en la edición local:", error);
-  }
-}, []);
+        // =============================================
+        // CONSULTAR ACTIVIDADES DE ESTA EXPLOTACIÓN
+        // =============================================
+
+        const data =
+          await api.getActivitiesByExploitation(
+            explotationId
+          );
+
+        console.log(
+          "ACTIVIDADES RECIBIDAS DE LA API:",
+          data
+        );
+
+        if (!Array.isArray(data)) {
+
+          console.warn(
+            "La API no devolvió un array"
+          );
+
+          setActivities([]);
+
+          return [];
+        }
+
+        // =============================================
+        // NORMALIZAR
+        // =============================================
+
+        const normalizadas: Activity[] =
+          data.map(
+            (act: any) => ({
+              ...act,
+
+              // La actividad viene del endpoint
+              // de esta explotación, por lo tanto
+              // sabemos a qué explotación pertenece.
+              explotation:
+                explotationId,
+            })
+          );
+
+        console.log(
+          "ACTIVIDADES DE LA EXPLOTACIÓN:",
+          normalizadas
+        );
+
+        console.log(
+          "================================"
+        );
+
+        setActivities(
+          normalizadas
+        );
+
+        return normalizadas;
+
+      } catch (error) {
+
+        console.error(
+          "Error al cargar actividades de la explotación:",
+          error
+        );
+
+        setActivities([]);
+
+        return [];
+      }
+
+    },
+    []
+  );
+
+  // =======================================================
+  // CREAR ACTIVIDAD
+  // =======================================================
+
+  const agregarActivity =
+    useCallback(
+      async (
+        act: Activity
+      ) => {
+
+        try {
+
+          const response =
+            await api.createActivity(
+              act
+            );
+
+          const nuevaAct =
+            response || act;
+
+          setActivities(
+            (prev) => [
+              nuevaAct,
+              ...prev,
+            ]
+          );
+
+        } catch (error) {
+
+          console.error(
+            "Error al guardar actividad:",
+            error
+          );
+
+          setActivities(
+            (prev) => [
+              act,
+              ...prev,
+            ]
+          );
+        }
+
+      },
+      []
+    );
+
+  // =======================================================
+  // ACTUALIZAR ACTIVIDAD
+  // =======================================================
+
+  const actualizarActivity =
+    useCallback(
+      async (
+        id: string,
+        act: Activity
+      ) => {
+
+        try {
+
+          await api.updateActivity(
+            id,
+            act
+          );
+
+        } catch (error) {
+
+          console.warn(
+            "No se pudo actualizar en servidor:",
+            error
+          );
+
+        }
+
+        setActivities(
+          (prev) =>
+            prev.map(
+              (a) =>
+                a.id === id
+                  ? {
+                      ...act,
+                      id,
+                    }
+                  : a
+            )
+        );
+
+      },
+      []
+    );
+
+  // =======================================================
+  // PROVIDER
+  // =======================================================
 
   return (
-    <ExplotationContext.Provider 
-      value={{ 
+
+    <ExplotationContext.Provider
+      value={{
+
         explotations,
+
+        activities,
+
         agregarExplotation,
-        activities, 
-        agregarActivity, 
+
+        agregarActivity,
+
         actualizarActivity,
-        cargarExplotacionesByProducer, 
-        cargarActividades 
+
+        cargarExplotacionesByProducer,
+
+        cargarExplotacionesByTechnician,
+
+        cargarActividades,
+
+        cargarActividadesByExplotation,
+
       }}
     >
+
       {children}
+
     </ExplotationContext.Provider>
+
   );
 };

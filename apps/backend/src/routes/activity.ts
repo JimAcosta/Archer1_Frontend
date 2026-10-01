@@ -4,6 +4,8 @@ import { authenticateJWT } from "@/middleware/auth.middleware";
 
 const router = Router();
 
+
+
 /**
  * @openapi
  * /api/activity:
@@ -83,6 +85,14 @@ router.get("/", authenticateJWT, activityController.getActivities);
  *               $ref: '#/components/schemas/ActivityFormOptionsResponse'
  */
 router.get("/", authenticateJWT, activityController.getFormOptions);
+
+
+/*router.get("/:producerId",authenticateJWT,activityController.getActivitiesByExploitation);*/
+
+router.get("/exploitation/:exploitationId",authenticateJWT,activityController.getActivitiesByExploitation);
+
+
+
 
 /**
  * @openapi

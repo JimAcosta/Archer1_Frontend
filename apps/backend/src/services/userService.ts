@@ -69,6 +69,7 @@ class UserService {
       token
     };
   }
+
 }
 
 export default new UserService();

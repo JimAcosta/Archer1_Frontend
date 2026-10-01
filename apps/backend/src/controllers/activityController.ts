@@ -11,7 +11,7 @@ export default {
 
     async getActivities(req: Request, res: Response) {
         const  User  = (req.user as User).id;;
-        const activities = await activityService.getActivitiesByProducer(User);
+        const activities = await activityService.getFormOptions(User);
         return res.json(activities);
     },
 
@@ -19,5 +19,20 @@ export default {
         const  User  = (req.user as User).id;;
         const options = await activityService.getFormOptions(User);
         return res.json(options);
+    },
+
+    async getActivitiesByExploitation(req: Request, res: Response) {
+        console.log("Llegue controler");
+        const { exploitationId } = req.params;
+        console.log(exploitationId);
+        const activities =
+        await activityService.getActivitiesByExploitation(
+            exploitationId
+        );
+
+        res.json(activities);
     }
+
+
+
 }
